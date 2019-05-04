@@ -1,71 +1,75 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plot
+import matplotlib.pyplot as plt
 from statsmodels.tsa.arima_model import ARIMA
 from library.utils import test_stationarity
 
 
-table = pd.read_csv("resources/bitcoinData.csv", index_col=0)
-# Reading the input data from csv file
+# Reading the input data from csv file and get around the weird date format
+df = pd.read_csv("resources/CrudeOilPricesDaily.csv")
+print(df.head(10))
+df['Date'] = pd.to_datetime(df['Date'])
+df.set_index(df['Date'])
 
 # Plotting the time series
-data = table['Close']
-Date1 = table['Date']
-train1 = table[['Date', 'Close']]
+data = df['Closing Value']
+Date1 = df['Closing Value']
+train1 = df[['Date', 'Closing Value']]
+
 # Setting the Date as Index
 train2 = train1.set_index('Date')
 train2.sort_index(inplace=True)
 print(type(train2))
 print(train2.head())
-plot.plot(train2)
-plot.xlabel('Date', fontsize=12)
-plot.ylabel('Price in USD', fontsize=12)
-plot.title("Closing price distribution of bitcoin", fontsize=15)
-plot.show()
+plt.plot(train2)
+plt.xlabel('Date', fontsize=12)
+plt.ylabel('Price in USD', fontsize=12)
+plt.title("Closing price distribution of crude oil", fontsize=15)
+plt.show()
 
 # Log Transforming the series
-ts = train2['Close']
-test_stationarity(ts)
+ts = train2['Closing Value']
+test_stationarity(ts, 367, 1000)
 
 # Remove trend and seasonality with differencing
 ts_log = np.log(ts)
-plot.plot(ts_log, color="green")
-plot.show()
+plt.plot(ts_log, color="green")
+plt.show()
 
-test_stationarity(ts_log)
+test_stationarity(ts_log, 367, 1000)
 
 ts_log_diff = ts_log - ts_log.shift()
-plot.plot(ts_log_diff)
-plot.show()
+plt.plot(ts_log_diff)
+plt.show()
 
 ts_log_diff.dropna(inplace=True)
-test_stationarity(ts_log_diff)
+test_stationarity(ts_log_diff, 367, 1000)
 
 # Auto Regressive model
 # follow lag
 model = ARIMA(ts_log, order=(1, 1, 0))
 results_ARIMA = model.fit(disp=-1)
-plot.plot(ts_log_diff)
-plot.plot(results_ARIMA.fittedvalues, color='red')
-plot.title('RSS: %.7f' % sum((results_ARIMA.fittedvalues-ts_log_diff)**2))
-plot.show()
+plt.plot(ts_log_diff)
+plt.plot(results_ARIMA.fittedvalues, color='red')
+plt.title('RSS: %.7f' % sum((results_ARIMA.fittedvalues-ts_log_diff)**2))
+plt.show()
 
 # Moving Average Model
 # follow error
 model = ARIMA(ts_log, order=(0, 1, 1))
 results_MA = model.fit(disp=-1)
-plot.plot(ts_log_diff)
-plot.plot(results_MA.fittedvalues, color='red')
-plot.title('RSS: %.7f' % sum((results_MA.fittedvalues-ts_log_diff)**2))
-plot.show()
+plt.plot(ts_log_diff)
+plt.plot(results_MA.fittedvalues, color='red')
+plt.title('RSS: %.7f' % sum((results_MA.fittedvalues-ts_log_diff)**2))
+plt.show()
 
 # Auto Regressive Integrated Moving Average Model
 model = ARIMA(ts_log, order=(2, 1, 0))
 results_ARIMA = model.fit(disp=-1)
-plot.plot(ts_log_diff)
-plot.plot(results_ARIMA.fittedvalues, color='red')
-plot.title('RSS: %.7f' % sum((results_ARIMA.fittedvalues-ts_log_diff)**2))
-plot.show()
+plt.plot(ts_log_diff)
+plt.plot(results_ARIMA.fittedvalues, color='red')
+plt.title('RSS: %.7f' % sum((results_ARIMA.fittedvalues-ts_log_diff)**2))
+plt.show()
 
 
 size = int(len(ts_log) - 100)
@@ -107,13 +111,13 @@ for t in range(len(test_arima)):
 # After iterating over whole test set the overall mean error is calculated.
 print('\n Mean Error in Predicting Test Case Articles : %f ' %
       (sum(error_list) / float(len(error_list))), '%')
-plot.figure(figsize=(8, 6))
+plt.figure(figsize=(8, 6))
 test_day = [t for t in range(len(test_arima))]
 labels = {'Orginal', 'Predicted'}
-plot.plot(test_day, predictions, color='green')
-plot.plot(test_day, originals, color='orange')
-plot.title('Expected Vs Predicted Views Forecasting')
-plot.xlabel('Day')
-plot.ylabel('Closing Price')
-plot.legend(labels)
-plot.show()
+plt.plot(test_day, predictions, color='green')
+plt.plot(test_day, originals, color='orange')
+plt.title('Expected Vs Predicted Views Forecasting')
+plt.xlabel('Day')
+plt.ylabel('Closing Price')
+plt.legend(labels)
+plt.show()
