@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plot
 from statsmodels.tsa.stattools import adfuller
 
-#Testing the Stationarity
+# Testing the Stationarity
+
+
 def test_stationarity(x):
     # Determing rolling statistics
     rolmean = x.rolling(window=22, center=False).mean()
@@ -27,7 +29,7 @@ def test_stationarity(x):
             break
         else:
             print("The graph is stationery")
-            break;
+            break
     print('Critical values:')
     for key, value in result[4].items():
         print('\t%s: %.3f ' % (key, value))
