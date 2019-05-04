@@ -1,38 +1,36 @@
 import matplotlib.pyplot as plt
 from statsmodels.tsa.stattools import adfuller
 
-# Testing the Stationarity
+# Testing the Stationarity of the series
 
 
-def test_stationarity(df, window_rolling_mean, window_rolling_stddev):
-    # Determing rolling statistics
-    rolmean = df.rolling(window=window_rolling_mean, center=False).mean()
-
-    rolstd = df.rolling(window=window_rolling_stddev, center=False).std()
+def test_stationarity(x, window):
+    # Determine rolling statistics
+    rollmean = x.rolling(window=window, center=False).mean()
+    rollstd = x.rolling(window=window, center=False).std()
 
     # Plot rolling statistics:
-    orig = plt.plot(df, color='blue', label='Original')
-    mean = plt.plot(rolmean, color='red', label='Rolling Mean')
-    std = plt.plot(rolstd, color='black', label='Rolling Std')
+    plt.plot(x, color='blue', label='Original')
+    plt.plot(rollmean, color='red', label='Rolling Mean')
+    plt.plot(rollstd, color='black', label='Rolling Std deviation')
     plt.legend(loc='best')
     plt.title('Rolling Mean & Standard Deviation')
     plt.show(block=False)
 
-    # drop NaN values
-    df.dropna(inplace=True)
+    # drop NaN values as it causes the test to crash
+    x2 = x.dropna()
 
-    # Perform Dickey Fuller test
-    result = adfuller(df)
-    print('ADF Stastistic: %f' % result[0])
+    # Perform Dickey Fuller test and log results
+    result = adfuller(x2['Closing Value'], autolag='AIC')
+    print('Dickey-Fuller Statistic: %f' % result[0])
     print('p-value: %f' % result[1])
     pvalue = result[1]
     for key, value in result[4].items():
+        print('Critical value %s: %.3f ' % (key, value))
+    for key, value in result[4].items():
         if result[0] > value:
-            print("The graph is non stationery")
+            print('The dataset is non-stationary')
             break
         else:
-            print("The graph is stationery")
+            print('The dataset is stationary (confidence level %s)' % key)
             break
-    print('Critical values:')
-    for key, value in result[4].items():
-        print('\t%s: %.3f ' % (key, value))

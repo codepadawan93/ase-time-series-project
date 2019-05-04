@@ -2,48 +2,70 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from statsmodels.tsa.arima_model import ARIMA
+from statsmodels.tsa.seasonal import seasonal_decompose
 from library.utils import test_stationarity
 
+# 365 days - calculate at the level of one year
+DAYS = 365
 
-# Reading the input data from csv file and get around the weird date format
+# Read the input data from csv file, get around the weird date format,
+# set the index and sort by time
 df = pd.read_csv("resources/CrudeOilPricesDaily.csv")
+df['Date'] = pd.to_datetime(df['Date'], infer_datetime_format=True)
+df.set_index(['Date'], inplace=True)
+df.sort_index(inplace=True)
 print(df.head(10))
-df['Date'] = pd.to_datetime(df['Date'])
-df.set_index(df['Date'])
+print(type(df.index))
 
-# Plotting the time series
-data = df['Closing Value']
-Date1 = df['Closing Value']
-train1 = df[['Date', 'Closing Value']]
-
-# Setting the Date as Index
-train2 = train1.set_index('Date')
-train2.sort_index(inplace=True)
-print(type(train2))
-print(train2.head())
-plt.plot(train2)
+# Plot the time series
+plt.plot(df)
 plt.xlabel('Date', fontsize=12)
-plt.ylabel('Price in USD', fontsize=12)
-plt.title("Closing price distribution of crude oil", fontsize=15)
+plt.ylabel('Price in USD/barrel', fontsize=12)
+plt.title('Closing price of crude oil', fontsize=15)
 plt.show()
 
-# Log Transforming the series
-ts = train2['Closing Value']
-test_stationarity(ts, 367, 1000)
+# Begin transforming the series to make it stationary
+# Get the values only as a pandas series and apply dickie fuller
+test_stationarity(df, DAYS)
 
-# Remove trend and seasonality with differencing
-ts_log = np.log(ts)
-plt.plot(ts_log, color="green")
+# Log transform the series, plot and apply again
+ts_log = np.log(df)
+plt.plot(ts_log, label='Log-transformed')
+plt.legend(loc='best')
 plt.show()
+ts_log.dropna(inplace=True)
+test_stationarity(ts_log, DAYS)
 
-test_stationarity(ts_log, 367, 1000)
-
+# Remove trend and seasonality with differencing, plot, drop NaN values
+#  and apply again
 ts_log_diff = ts_log - ts_log.shift()
-plt.plot(ts_log_diff)
+plt.plot(ts_log_diff, label='Difference')
+plt.legend(loc='best')
+plt.show()
+ts_log_diff.dropna(inplace=True)
+test_stationarity(ts_log_diff, DAYS)
+
+# Decompose data into components
+decomposition = seasonal_decompose(ts_log, model='multiplicative', freq=DAYS)
+trend = decomposition.trend
+seasonal = decomposition.seasonal
+residual = decomposition.resid
+plt.subplot(411)
+plt.plot(ts_log, label='Original')
+plt.legend(loc='best')
+plt.subplot(412)
+plt.plot(trend, label='Trend')
+plt.legend(loc='best')
+plt.subplot(413)
+plt.plot(seasonal, label='Seasonality')
+plt.legend(loc='best')
+plt.subplot(414)
+plt.plot(residual, label='Residuals')
+plt.legend(loc='best')
+plt.tight_layout()
 plt.show()
 
-ts_log_diff.dropna(inplace=True)
-test_stationarity(ts_log_diff, 367, 1000)
+# TODO:: Fix below, video was at 26.55
 
 # Auto Regressive model
 # follow lag
@@ -71,17 +93,16 @@ plt.plot(results_ARIMA.fittedvalues, color='red')
 plt.title('RSS: %.7f' % sum((results_ARIMA.fittedvalues-ts_log_diff)**2))
 plt.show()
 
-
-size = int(len(ts_log) - 100)
-# Divide into train and test
+# we can now make predictions
+# Divide into train and test datasets
+size = int(len(ts_log) - 50)
 train_arima, test_arima = ts_log[0:size], ts_log[size:len(ts_log)]
 history = [x for x in train_arima]
 predictions = list()
 originals = list()
 error_list = list()
 
-print('Printing Predicted vs Expected Values...')
-print('\n')
+print('Printing Predicted vs Expected Values...\n')
 # We go over each value in the test set and then apply ARIMA model and calculate the predicted value.
 # We have the expected value in the test set therefore we calculate the error between predicted and expected value
 for t in range(len(test_arima)):
