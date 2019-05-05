@@ -34,3 +34,10 @@ def test_stationarity(x, window):
         else:
             print('The dataset is stationary (confidence level %s)' % key)
             break
+
+
+# Calcluate the residual sum of squares
+def rss(fitted, actual):
+    series = (fitted-actual)**2
+    series.dropna(inplace=True)
+    return sum(series)
