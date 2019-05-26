@@ -21,7 +21,8 @@ def test_stationarity(x, window):
     x2 = x.dropna()
 
     # Perform Dickey Fuller test and log results
-    result = adfuller(x2['Closing Value'], autolag='AIC')
+    # result = adfuller(x2['Closing Value'], autolag='AIC')
+    result = adfuller(x2, autolag='AIC')
     print('Dickey-Fuller Statistic: %f' % result[0])
     print('p-value: %f' % result[1])
     pvalue = result[1]

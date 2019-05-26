@@ -33,7 +33,7 @@ plt.show()
 
 # Begin transforming the series to make it stationary
 # Get the values only as a pandas series and apply dickie fuller
-test_stationarity(df, DAYS)
+test_stationarity(df['Closing Value'], DAYS)
 
 # Log transform the series, plot and apply again
 ts_log = np.log(df)
@@ -41,7 +41,7 @@ plt.plot(ts_log, label='Log-transformed', color='green')
 plt.legend(loc='best')
 plt.show()
 ts_log.dropna(inplace=True)
-test_stationarity(ts_log, DAYS)
+test_stationarity(ts_log['Closing Value'], DAYS)
 
 # Remove trend and seasonality with differencing, plot, drop NaN values
 #  and apply again
@@ -50,7 +50,7 @@ plt.plot(ts_log_diff, label='Difference', color='green')
 plt.legend(loc='best')
 plt.show()
 ts_log_diff.dropna(inplace=True)
-test_stationarity(ts_log_diff, DAYS)
+test_stationarity(ts_log_diff['Closing Value'], DAYS)
 
 # Decompose data into components
 decomposition = seasonal_decompose(ts_log, model='multiplicative', freq=DAYS)
@@ -76,7 +76,7 @@ plt.show()
 plt.plot(residual, label='Residuals (noise)', color='blue')
 plt.legend(loc='best')
 plt.show()
-test_stationarity(residual, DAYS)
+test_stationarity(residual['Closing Value'], DAYS)
 plt.show()
 
 # Plot ACF and PACF to find p, d, q - smoothen using rolling mean
